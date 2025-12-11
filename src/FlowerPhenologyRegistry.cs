@@ -4,7 +4,7 @@ namespace SeasonalFlowers;
 
 public static class FlowerPhenologyRegistry
 {
-    static Dictionary<string, FlowerPhenology> data = new Dictionary<string, FlowerPhenology>()
+    static readonly Dictionary<string, FlowerPhenology> Data = new Dictionary<string, FlowerPhenology>()
     {
         // key: block.Code.Path => value: months (Grow, Flower, PostFlower, Hibernate)
         // Replace keys with exact vanilla block code paths if necessary.
@@ -54,7 +54,7 @@ public static class FlowerPhenologyRegistry
 
     public static FlowerPhenology Get(string code)
     {
-        if (data.TryGetValue(code, out var val)) return val;
+        if (Data.TryGetValue(code, out var val)) return val;
 
         // fallback: gentle default
         return new FlowerPhenology

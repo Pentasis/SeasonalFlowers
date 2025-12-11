@@ -2,7 +2,7 @@ namespace SeasonalFlowers;
 
 public class FlowerPhenology
 {
-    // Month numbers 1..12 (northern hemisphere)
+    // Month numbers 1..12 (Northern Hemisphere)
     // GrowMonth  = on day 3 at 01:00 switch Hibernate -> Grow
     // FlowerMonth = on day 3 at 01:00 switch Grow -> Flower
     // PostFlowerMonth = on day 3 at 01:00 switch Flower -> PostFlower

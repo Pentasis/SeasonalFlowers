@@ -1,126 +1,159 @@
-using System;
 using Vintagestory.API.Client;
+using Vintagestory.GameContent;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
 namespace SeasonalFlowers;
 
-public class SeasonalFlowerOverrideBlock : Block
+public class SeasonalFlowerOverrideBlock : BlockPlant
 {
-    FlowerPhenology phenology;
+    FlowerPhenology phen;
 
     public override void OnLoaded(ICoreAPI api)
     {
         base.OnLoaded(api);
-        phenology = FlowerPhenologyRegistry.Get(Code.Path);
+        phen = FlowerPhenologyRegistry.Get(Code.Path);
     }
 
-    // WORLD: seasonal 4-state rendering
+    // WORLD: dynamic season-based textures BEFORE JSON tessellation.
     public override void OnBeforeRender(ICoreClientAPI capi, BlockPos pos, ref MeshData mesh)
     {
-        base.OnBeforeRender(capi, pos, ref mesh);
-        ApplySeasonalTexture_World(capi, pos, ref mesh);
+        // 1. Determine phase.
+        string phase = GetPhase(capi.World.Calendar, pos);
+
+        // 2. Build a texture dictionary overriding vanilla slots
+        // but *not* touching JSON tesselation structure.
+        var texdict = GetSeasonalTextureDict(capi, phase);
+
+        // 3. Apply the texture dictionary to the block for this render frame
+        // This replaces vanilla texture slots without altering shapes.
+        if (Textures != null)
+        {
+            foreach (var kv in texdict)
+            {
+                if (Textures.ContainsKey(kv.Key))
+                {
+                    Textures[kv.Key].Baked.Texture = kv.Value;
+                }
+            }
+        }
     }
 
-    // ITEM / DROPPED / POT: always show flower texture
+    // ITEMS / POTTED: always show FLOWER phase
     public override void OnBeforeRender(ICoreClientAPI capi, ItemStack itemstack, EnumItemRenderTarget target, ref ItemRenderInfo renderinfo)
     {
-        base.OnBeforeRender(capi, itemstack, target, ref renderinfo);
-        ApplyFlowerTexture_Item(capi, ref renderinfo);
-    }
+        var tex = capi.BlockTextureAtlas.GetOrInsertTexture(
+            new AssetLocation($"seasonalflowers:block/{Code.Path}/flower")
+        );
 
-    void ApplyFlowerTexture_Item(ICoreClientAPI capi, ref ItemRenderInfo renderinfo)
-    {
-        var tex = capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation($"seasonalflowers:block/{Code.Path}/flower"));
         renderinfo.TextureId = tex.AtlasTextureId;
     }
 
-    void ApplySeasonalTexture_World(ICoreClientAPI capi, BlockPos pos, ref MeshData mesh)
+    // --------------------------
+    // PHASE & TIME LOGIC
+    // --------------------------
+
+    string GetPhase(IGameCalendar cal, BlockPos pos)
     {
-        var cal = capi.World.Calendar;
+        int grow = phen.GrowMonth;
+        int flower = phen.FlowerMonth;
+        int post = phen.PostFlowerMonth;
+        int hiber = phen.HibernateMonth;
 
-        // read base months from phenology (northern hemisphere)
-        int g = phenology.GrowMonth;
-        int f = phenology.FlowerMonth;
-        int p = phenology.PostFlowerMonth;
-        int h = phenology.HibernateMonth;
-
-        // detect hemisphere for this position and flip months for southern hemisphere
+        // Hemisphere detection
         try
         {
-            var hem = cal.GetHemisphere(pos); // EnumHemisphere
-            if (hem == Vintagestory.API.Common.EnumHemisphere.South)
+            var hem = cal.GetHemisphere(pos);
+            if (hem == EnumHemisphere.South)
             {
-                g = ShiftMonthHalfYear(g);
-                f = ShiftMonthHalfYear(f);
-                p = ShiftMonthHalfYear(p);
-                h = ShiftMonthHalfYear(h);
+                grow = ShiftMonth(grow);
+                flower = ShiftMonth(flower);
+                post = ShiftMonth(post);
+                hiber = ShiftMonth(hiber);
             }
         }
-        catch
-        {
-            // If GetHemisphere unavailable for some reason, default to northern behavior.
-        }
+        catch { }
 
-        // Build transition points (ordered) in absolute hours since start of this year
-        float hoursPerDay = cal.HoursPerDay;
-        int daysPerMonth = cal.DaysPerMonth;
-        int daysPerYear = cal.DaysPerYear;
+        double hours = cal.TotalDays * cal.HoursPerDay + cal.HourOfDay;
 
-        // Helper: convert month (1..12) and day (3) and hour (1.0) to total hours since Jan 1 0:00
-        Func<int, double> monthDay3Hour1_totalHours = (int month) =>
+        // Transition hours (day 3, 01:00)
+        double Hg = MonthThreshold(cal, grow);
+        double Hf = MonthThreshold(cal, flower);
+        double Hp = MonthThreshold(cal, post);
+        double Hh = MonthThreshold(cal, hiber);
+
+        // Build ordered cycle
+        // We want the LAST transition <= now.
+        var list = new List<(double h, string p)>
         {
-            // day index (0-based) for the 3rd day of that month:
-            long dayIndex = (long)(month - 1) * daysPerMonth + (3 - 1);
-            double totalHours = dayIndex * (double)hoursPerDay + 1.0; // 01:00
-            return totalHours;
+            (Hg, "grow"),
+            (Hf, "flower"),
+            (Hp, "postflower"),
+            (Hh, "hibernate")
         };
 
-        // Create a list of transitions (totalHours, phaseNameAfterTransition)
-        var transitions = new List<(double totalHours, string phaseName)>();
-
-        // Order: GrowMonth -> Grow, FlowerMonth -> Flower, PostFlowerMonth -> PostFlower, HibernateMonth -> Hibernate
-        transitions.Add((monthDay3Hour1_totalHours(g), "grow"));
-        transitions.Add((monthDay3Hour1_totalHours(f), "flower"));
-        transitions.Add((monthDay3Hour1_totalHours(p), "postflower"));
-        transitions.Add((monthDay3Hour1_totalHours(h), "hibernate"));
-
-        // current time in hours since Jan 1 0:00 (may be fractional, uses TotalDays)
-        double currentTotalHours = cal.TotalDays * (double)hoursPerDay + cal.HourOfDay;
-
-        // Because transitions are cyclical, we want the latest transition <= current time considering wrap-around across year boundary.
-        // Build an expanded list with year+ and yearcopies so we can easily find the last transition.
-        var expanded = new List<(double totalHours, string phaseName)>();
-        foreach (var t in transitions)
+        // Expand +/1 year
+        double yearHours = cal.DaysPerYear * cal.HoursPerDay;
+        var ex = new List<(double h, string p)>();
+        foreach (var t in list)
         {
-            expanded.Add((t.totalHours - daysPerYear * hoursPerDay, t.phaseName)); // previous year
-            expanded.Add((t.totalHours, t.phaseName));                             // this year
-            expanded.Add((t.totalHours + daysPerYear * hoursPerDay, t.phaseName)); // next year
+            ex.Add((t.h - yearHours, t.p));
+            ex.Add((t.h, t.p));
+            ex.Add((t.h + yearHours, t.p));
         }
 
-        // find the transition with largest totalHours <= currentTotalHours
-        double bestTime = double.NegativeInfinity;
-        string currentPhase = "hibernate"; // default
-        foreach (var e in expanded)
+        string phase = "hibernate";
+        double best = double.NegativeInfinity;
+
+        foreach (var t in ex)
         {
-            if (e.totalHours <= currentTotalHours && e.totalHours > bestTime)
+            if (t.h <= hours && t.h > best)
             {
-                bestTime = e.totalHours;
-                currentPhase = e.phaseName;
+                best = t.h;
+                phase = t.p;
             }
         }
 
-        // Set texture based on currentPhase (grow/flower/postflower/hibernate)
-        var tex = capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation($"seasonalflowers:block/{Code.Path}/{currentPhase}"));
-        mesh.SetTexPos(tex.SubPosition, tex.SubSize);
+        return phase;
     }
 
-    // Add 6 months, wrap to 1..12
-    int ShiftMonthHalfYear(int month)
+    double MonthThreshold(IGameCalendar cal, int month)
     {
-        int m = (month + 6);
-        while (m > 12) m -= 12;
-        while (m < 1) m += 12;
-        return m;
+        long dayIndex = (month - 1) * cal.DaysPerMonth + 2; // day 3 (0-based index)
+        return dayIndex * cal.HoursPerDay + 1.0;            // 01:00
+    }
+
+    int ShiftMonth(int month)
+    {
+        month += 6;
+        if (month > 12) month -= 12;
+        return month;
+    }
+
+    // --------------------------
+    // TEXTURE MAPPING
+    // --------------------------
+
+    Dictionary<string, int> GetSeasonalTextureDict(ICoreClientAPI capi, string phase)
+    {
+        // Build dictionary of texture slots → atlasID.
+
+        var dict = new Dictionary<string, int>();
+
+        foreach (var kv in Textures)
+        {
+            // kv.Key e.g. "north1", "south1", "northTinted1", …
+            string slot = kv.Key;
+
+            // final asset: seasonalflowers:block/<codepath>/<phase>/<slot>
+            // You can also flatten this, but slot-level files give full control.
+            var loc = new AssetLocation($"seasonalflowers:block/{Code.Path}/{phase}/{slot}");
+
+            var tex = capi.BlockTextureAtlas.GetOrInsertTexture(loc);
+
+            dict[slot] = tex.AtlasTextureId;
+        }
+
+        return dict;
     }
 }
