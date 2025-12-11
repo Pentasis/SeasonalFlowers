@@ -1,0 +1,12 @@
+{
+  "type": "code",
+  "name": "Seasonal Flowers",
+  "modid": "seasonalflowers",
+  "version": "1.0.0",
+  "description" : "Makes flowers flower and wither.",
+  "website": "https://github.com/Pentasis/SeasonalFlowers",
+  "authors": [ "Pentasis" ],
+  "dependencies": {
+    "game": "1.21.5"
+  }
+}
