@@ -7,6 +7,7 @@ public class SeasonalFlowersModSystem : ModSystem
     public override void Start(ICoreAPI api)
     {
         base.Start(api);
+
         api.RegisterBlockClass("SeasonalFlowerOverride", typeof(SeasonalFlowerOverrideBlock));
     }
 
