@@ -155,25 +155,53 @@ public class SeasonalFlowerBlock : BlockPlant
     // textures with a transparent texture.
     private void HidePetals(ref MeshData mesh, TextureAtlasPosition texPos)
     {
+        var capi = api as ICoreClientAPI;
+        if (capi == null) return;
+
         for (int i = 0; i < mesh.GetVerticesCount(); i++)
         {
-            var textureId = mesh.TextureIndices[i / 4];
+            // Get the texture ID used by the current face of the mesh
+            // mesh.TextureIndices[i / 4] gives the index into mesh.TextureIds
+            // mesh.TextureIds[index] gives the actual texture sub ID
+            int currentMeshTextureSubId = mesh.TextureIds[mesh.TextureIndices[i / 4]];
+
+            // Find the CompositeTexture in the Block's Textures dictionary that matches this sub ID
+            CompositeTexture? matchedCompositeTexture = null;
+            string matchedKey = "N/A"; // For logging
             foreach (var kv in Textures)
             {
-                if (kv.Value.Baked.TextureSubId == mesh.TextureIds[textureId])
+                if (kv.Value.Baked.TextureSubId == currentMeshTextureSubId)
                 {
-                    // if (kv.Key.ToLowerInvariant().Contains("petal"))
-                    if (kv.Value.Base.Path.Contains("petal"))
-                    {
-                        var uv = new Vec2f(mesh.Uv[i * 2], mesh.Uv[i * 2 + 1]);
-                        var newUv = new Vec2f(
-                            texPos.x1 + uv.X * (texPos.x2 - texPos.x1),
-                            texPos.y1 + uv.Y * (texPos.y2 - texPos.y1)
-                        );
-                        mesh.Uv[i * 2] = newUv.X;
-                        mesh.Uv[i * 2 + 1] = newUv.Y;
-                    }
+                    matchedCompositeTexture = kv.Value;
+                    matchedKey = kv.Key;
+                    break; // Found the matching texture definition
                 }
+            }
+
+            if (matchedCompositeTexture != null)
+            {
+                capi.Logger.Debug($"[SeasonalFlowers] HidePetals: BlockCode={Code.Path}, Matched Texture Key={matchedKey}, Matched Path={matchedCompositeTexture.Base.Path}, Mesh TextureSubId={currentMeshTextureSubId}");
+
+                // Now check if the path of this matched texture contains "petal"
+                if (matchedCompositeTexture.Base.Path.Contains("petal"))
+                {
+                    capi.Logger.Debug($"[SeasonalFlowers] HidePetals: Path contains 'petal' for BlockCode={Code.Path}, Key={matchedKey}. Applying transparency.");
+                    var uv = new Vec2f(mesh.Uv[i * 2], mesh.Uv[i * 2 + 1]);
+                    var newUv = new Vec2f(
+                        texPos.x1 + uv.X * (texPos.x2 - texPos.x1),
+                        texPos.y1 + uv.Y * (texPos.y2 - texPos.y1)
+                    );
+                    mesh.Uv[i * 2] = newUv.X;
+                    mesh.Uv[i * 2 + 1] = newUv.Y;
+                }
+                else
+                {
+                    capi.Logger.Debug($"[SeasonalFlowers] HidePetals: Path does NOT contain 'petal' for BlockCode={Code.Path}, Key={matchedKey}. Path: {matchedCompositeTexture.Base.Path}");
+                }
+            }
+            else
+            {
+                capi.Logger.Debug($"[SeasonalFlowers] HidePetals: BlockCode={Code.Path}, No matching CompositeTexture found in Block.Textures for mesh TextureSubId={currentMeshTextureSubId}");
             }
         }
     }
