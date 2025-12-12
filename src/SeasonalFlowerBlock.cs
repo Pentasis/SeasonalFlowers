@@ -47,26 +47,29 @@ public class SeasonalFlowerBlock : BlockPlant
         var capi = api as ICoreClientAPI;
         if (capi == null) return;
 
+        // Clone the sourceMesh to avoid modifying the cached mesh directly
+        MeshData mesh = sourceMesh.Clone();
+
         string phase = GetPhase(capi, capi.World.Calendar, pos);
 
         if (phase == "hibernate")
         {
             if (_hibernationTexPos != null)
             {
-                ApplyFullOverride(ref sourceMesh, _hibernationTexPos);
+                ApplyFullOverride(ref mesh, _hibernationTexPos);
             }
-            return;
         }
-
-        if (phase == "grow" || phase == "wither")
+        else if (phase == "grow" || phase == "wither")
         {
             if (_transparentTexPos != null)
             {
-                HidePetals(ref sourceMesh, _transparentTexPos);
+                HidePetals(ref mesh, _transparentTexPos);
             }
         }
-        
-        // if (phase == "flower") {} ==> Vanilla Textures
+        // if (phase == "flower") {} ==> Vanilla Textures (no modifications needed)
+
+        // Assign the modified mesh back to sourceMesh
+        sourceMesh = mesh;
     }
 
     // Determines the current seasonal phase of the flower (e.g., "grow", "flower", "wither", "hibernate")
@@ -150,10 +153,8 @@ public class SeasonalFlowerBlock : BlockPlant
 
     // Modifies the flower's mesh to hide the petals. It does this by replacing the petal
     // textures with a transparent texture.
-    private void HidePetals(ref MeshData mesh, TextureAtlasPosition? texPos)
+    private void HidePetals(ref MeshData mesh, TextureAtlasPosition texPos)
     {
-        if (texPos == null) return; // This check is now valid
-
         for (int i = 0; i < mesh.GetVerticesCount(); i++)
         {
             var textureId = mesh.TextureIndices[i / 4];
@@ -178,10 +179,8 @@ public class SeasonalFlowerBlock : BlockPlant
 
     // Modifies the flower's mesh to replace all its textures with a single, specified texture.
     // This is used for the "hibernate" phase.
-    private void ApplyFullOverride(ref MeshData mesh, TextureAtlasPosition? texPos)
+    private void ApplyFullOverride(ref MeshData mesh, TextureAtlasPosition texPos)
     {
-        if (texPos == null) return; // This check is now valid
-
         for (int i = 0; i < mesh.GetVerticesCount(); i++)
         {
             var uv = new Vec2f(mesh.Uv[i * 2], mesh.Uv[i * 2 + 1]);
