@@ -14,12 +14,23 @@ public class SeasonalFlowerBlock : BlockPlant
     // Holds the seasonal growth cycle information for this specific flower block.
     private FlowerPhenology _phen = null!;
 
+    // Pre-loaded texture atlas positions for seasonal textures
+    private TextureAtlasPosition _transparentTexPos = null!;
+    private TextureAtlasPosition _hibernationTexPos = null!;
+
     // Called when the block is loaded by the game. This method initializes the phenology
     // for the flower by retrieving it from the central registry.
     public override void OnLoaded(ICoreAPI coreApi)
     {
         base.OnLoaded(coreApi);
         _phen = FlowerPhenologyRegistry.Get(Code.Path);
+
+        // Pre-load textures on the main thread
+        if (coreApi is ICoreClientAPI capi)
+        {
+            capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/transparent"), out _, out _transparentTexPos);
+            capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/hibernation"), out _, out _hibernationTexPos);
+        }
     }
 
     // This method is called by the engine when it's generating the visual mesh for a chunk.
@@ -34,13 +45,13 @@ public class SeasonalFlowerBlock : BlockPlant
 
         if (phase == "hibernate")
         {
-            ApplyFullOverride(capi, ref sourceMesh, "hibernation");
+            ApplyFullOverride(ref sourceMesh, _hibernationTexPos);
             return;
         }
 
         if (phase == "grow" || phase == "wither")
         {
-            HidePetals(capi, ref sourceMesh);
+            HidePetals(ref sourceMesh, _transparentTexPos);
         }
         
         // if (phase == "flower") {} ==> Vanilla Textures
@@ -127,10 +138,9 @@ public class SeasonalFlowerBlock : BlockPlant
 
     // Modifies the flower's mesh to hide the petals. It does this by replacing the petal
     // textures with a transparent texture.
-    private void HidePetals(ICoreClientAPI capi, ref MeshData mesh)
+    private void HidePetals(ref MeshData mesh, TextureAtlasPosition texPos)
     {
-        if (!capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/transparent"), out _, out var texPos))
-            return;
+        if (texPos == null) return;
 
         for (int i = 0; i < mesh.GetVerticesCount(); i++)
         {
@@ -156,10 +166,9 @@ public class SeasonalFlowerBlock : BlockPlant
 
     // Modifies the flower's mesh to replace all its textures with a single, specified texture.
     // This is used for the "hibernate" phase.
-    private void ApplyFullOverride(ICoreClientAPI capi, ref MeshData mesh, string name)
+    private void ApplyFullOverride(ref MeshData mesh, TextureAtlasPosition texPos)
     {
-        if (!capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation($"seasonalflowers:block/{name}"), out _, out var texPos))
-            return;
+        if (texPos == null) return;
 
         for (int i = 0; i < mesh.GetVerticesCount(); i++)
         {
