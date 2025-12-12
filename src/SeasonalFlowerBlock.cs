@@ -7,16 +7,24 @@ using System;
 
 namespace SeasonalFlowers;
 
+// Represents a flower block that changes its appearance based on the current season.
+// This class overrides the default plant block behaviour to implement seasonal texture changes.
 public class SeasonalFlowerBlock : BlockPlant
 {
+    // Holds the seasonal growth cycle information for this specific flower block.
     private FlowerPhenology _phen = null!;
 
+    // Called when the block is loaded by the game. This method initializes the phenology
+    // for the flower by retrieving it from the central registry.
     public override void OnLoaded(ICoreAPI coreApi)
     {
         base.OnLoaded(coreApi);
         _phen = FlowerPhenologyRegistry.Get(Code.Path);
     }
 
+    // This method is called by the engine when it's generating the visual mesh for a chunk.
+    // It allows for modification of the block's mesh before it's sent to the graphics card.
+    // Here, it's used to apply seasonal textures to the flower.
     public override void OnJsonTesselation(ref MeshData sourceMesh, ref int[] lightRgbsByCorner, BlockPos pos, Block[] chunkExtBlocks, int extIndex3d)
     {
         var capi = api as ICoreClientAPI;
@@ -34,8 +42,12 @@ public class SeasonalFlowerBlock : BlockPlant
         {
             HidePetals(capi, ref sourceMesh);
         }
+        
+        // if (phase == "flower") {} ==> Vanilla Textures
     }
 
+    // Determines the current seasonal phase of the flower (e.g., "grow", "flower", "wither", "hibernate")
+    // based on the current date in the in-game calendar.
     private string GetPhase(ICoreClientAPI capi, IGameCalendar cal, BlockPos pos)
     {
         int g = _phen.GrowMonth;
@@ -97,12 +109,15 @@ public class SeasonalFlowerBlock : BlockPlant
         return phaseName;
     }
 
+    // Calculates the total hours passed in the year up to the beginning of a given month.
+    // This is used as a threshold for switching between seasonal phases.
     private double Threshold(IGameCalendar cal, int month)
     {
         long day = (month - 1) * cal.DaysPerMonth + 2;
         return day * cal.HoursPerDay + 1.0;
     }
 
+    // Shifts a given month by 6 months to adjust for the Southern Hemisphere's seasons.
     private int ShiftMonth(int month)
     {
         month += 6;
@@ -110,6 +125,8 @@ public class SeasonalFlowerBlock : BlockPlant
         return month;
     }
 
+    // Modifies the flower's mesh to hide the petals. It does this by replacing the petal
+    // textures with a transparent texture.
     private void HidePetals(ICoreClientAPI capi, ref MeshData mesh)
     {
         if (!capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/transparent"), out _, out var texPos))
@@ -137,6 +154,8 @@ public class SeasonalFlowerBlock : BlockPlant
         }
     }
 
+    // Modifies the flower's mesh to replace all its textures with a single, specified texture.
+    // This is used for the "hibernate" phase.
     private void ApplyFullOverride(ICoreClientAPI capi, ref MeshData mesh, string name)
     {
         if (!capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation($"seasonalflowers:block/{name}"), out _, out var texPos))

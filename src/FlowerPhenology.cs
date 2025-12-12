@@ -1,17 +1,23 @@
 namespace SeasonalFlowers;
 
+// Defines the seasonal growth cycle for a flower.
+// This class holds the months (numbers 1-12) for each major phase of the flower's life cycle
+// based on the Northern Hemisphere.
 public class FlowerPhenology
 {
-    // Month numbers 1..12 (Northern Hemisphere)
-    // GrowMonth  = on day 3 at 01:00 switch Hibernate -> Grow
-    // FlowerMonth = on day 3 at 01:00 switch Grow -> Flower
-    // WitherMonth = on day 3 at 01:00 switch Flower -> Wither
-    // HibernateMonth = on day 3 at 01:00 switch Wither -> Hibernate
+    // The month when the flower starts to grow from its hibernating state.
     public int GrowMonth;
+
+    // The month when the flower is in full bloom.
     public int FlowerMonth;
+
+    // The month when the flower begins to wither after blooming.
     public int WitherMonth;
+
+    // The month when the flower enters hibernation for the winter.
     public int HibernateMonth;
 
-    // If you ever want variation later, keep this, but currently unused.
+    // An unused property that could be used in the future to add random variation
+    // to the timing of the growth phases.
     public int VariationDays = 0;
 }
