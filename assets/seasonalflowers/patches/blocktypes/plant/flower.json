@@ -1,0 +1,9 @@
+[
+  {
+    "op": "replace",
+    "file": "game:blocktypes/plant/flower.json",
+    "side": "server",
+    "path": "/variants/*/class",
+    "value": "SeasonalFlowerBlock"
+  }
+]

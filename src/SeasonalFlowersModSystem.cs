@@ -8,21 +8,6 @@ public class SeasonalFlowersModSystem : ModSystem
     {
         base.Start(api);
 
-        api.RegisterBlockClass("SeasonalFlowerOverride", typeof(SeasonalFlowerOverrideBlock));
-    }
-
-    public override void AssetsFinalize(ICoreAPI api)
-    {
-        base.AssetsFinalize(api);
-
-        foreach (var block in api.World.Blocks)
-        {
-            if (block?.Code == null) continue;
-
-            if (block.Code.Path.StartsWith("flower-"))
-            {
-                block.BlockClass = "SeasonalFlowerOverride";
-            }
-        }
+        api.RegisterBlockClass("SeasonalFlowerBlock", typeof(SeasonalFlowerBlock));
     }
 }

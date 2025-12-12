@@ -6,50 +6,50 @@ public static class FlowerPhenologyRegistry
 {
     static readonly Dictionary<string, FlowerPhenology> Data = new Dictionary<string, FlowerPhenology>()
     {
-        // key: block.Code.Path => value: months (Grow, Flower, PostFlower, Hibernate)
+        // key: block.Code.Path => value: months (Grow, Flower, Wither, Hibernate)
         // Replace keys with exact vanilla block code paths if necessary.
 
         // Catmint (Nepeta)
-        { "flower-catmint", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 5, PostFlowerMonth = 9,  HibernateMonth = 11 } },
+        { "flower-catmint", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 5, WitherMonth = 9,  HibernateMonth = 11 } },
 
         // Cornflower
-        { "flower-cornflower", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 6, PostFlowerMonth = 8,  HibernateMonth = 10 } },
+        { "flower-cornflower", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 6, WitherMonth = 8,  HibernateMonth = 10 } },
 
         // Cow parsley
-        { "flower-cowparsley", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 4, PostFlowerMonth = 6,  HibernateMonth = 9 } },
+        { "flower-cowparsley", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 4, WitherMonth = 6,  HibernateMonth = 9 } },
 
         // Dwarf furze (Ulex minor)
-        { "flower-dwarffurze", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 4, PostFlowerMonth = 7,  HibernateMonth = 10 } },
+        { "flower-dwarffurze", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 4, WitherMonth = 7,  HibernateMonth = 10 } },
 
         // Edelweiss
-        { "flower-edelweiss", new FlowerPhenology { GrowMonth = 4, FlowerMonth = 7, PostFlowerMonth = 9,  HibernateMonth = 11 } },
+        { "flower-edelweiss", new FlowerPhenology { GrowMonth = 4, FlowerMonth = 7, WitherMonth = 9,  HibernateMonth = 11 } },
 
         // Forget-me-not
-        { "flower-forgetmenot", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 4, PostFlowerMonth = 6,  HibernateMonth = 10 } },
+        { "flower-forgetmenot", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 4, WitherMonth = 6,  HibernateMonth = 10 } },
 
         // Golden poppy
-        { "flower-goldenpoppy", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 4, PostFlowerMonth = 7,  HibernateMonth = 11 } },
+        { "flower-goldenpoppy", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 4, WitherMonth = 7,  HibernateMonth = 11 } },
 
         // Heather
-        { "flower-heather", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 8, PostFlowerMonth = 10, HibernateMonth = 12 } },
+        { "flower-heather", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 8, WitherMonth = 10, HibernateMonth = 12 } },
 
         // Lily-of-the-Valley
-        { "flower-lilyofthevalley", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 5, PostFlowerMonth = 6,  HibernateMonth = 9 } },
+        { "flower-lilyofthevalley", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 5, WitherMonth = 6,  HibernateMonth = 9 } },
 
         // Lupine
-        { "flower-lupine", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 6, PostFlowerMonth = 8,  HibernateMonth = 10 } },
+        { "flower-lupine", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 6, WitherMonth = 8,  HibernateMonth = 10 } },
 
         // Orange mallow
-        { "flower-orange-mallow", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 5, PostFlowerMonth = 8,  HibernateMonth = 10 } },
+        { "flower-orange-mallow", new FlowerPhenology { GrowMonth = 3, FlowerMonth = 5, WitherMonth = 8,  HibernateMonth = 10 } },
 
         // Redtop grass
-        { "flower-redtop", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 6, PostFlowerMonth = 8,  HibernateMonth = 11 } },
+        { "flower-redtop", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 6, WitherMonth = 8,  HibernateMonth = 11 } },
 
         // Wild daisy
-        { "flower-wilddaisy", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 4, PostFlowerMonth = 9,  HibernateMonth = 12 } },
+        { "flower-wilddaisy", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 4, WitherMonth = 9,  HibernateMonth = 12 } },
 
         // Woad
-        { "flower-woad", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 5, PostFlowerMonth = 7,  HibernateMonth = 10 } },
+        { "flower-woad", new FlowerPhenology { GrowMonth = 2, FlowerMonth = 5, WitherMonth = 7,  HibernateMonth = 10 } },
     };
 
     public static FlowerPhenology Get(string code)
@@ -61,7 +61,7 @@ public static class FlowerPhenologyRegistry
         {
             GrowMonth = 3,
             FlowerMonth = 5,
-            PostFlowerMonth = 8,
+            WitherMonth = 8,
             HibernateMonth = 11
         };
     }
