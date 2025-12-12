@@ -162,7 +162,8 @@ public class SeasonalFlowerBlock : BlockPlant
             {
                 if (kv.Value.Baked.TextureSubId == mesh.TextureIds[textureId])
                 {
-                    if (kv.Key.ToLowerInvariant().Contains("petal"))
+                    // if (kv.Key.ToLowerInvariant().Contains("petal"))
+                    if (kv.Value.Base.Path.Contains("petal"))
                     {
                         var uv = new Vec2f(mesh.Uv[i * 2], mesh.Uv[i * 2 + 1]);
                         var newUv = new Vec2f(
