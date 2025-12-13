@@ -15,7 +15,7 @@ public class SeasonalFlowerBlock : BlockPlant
     private FlowerPhenology _phen = null!;
 
     // Pre-loaded texture atlas positions for seasonal textures
-    private int _hibernationSubId;
+    private TextureAtlasPosition? _hibernationTexPos;
     private int _transparentSubId;
     private HashSet<int> _petalSubIds = new();
 
@@ -38,11 +38,7 @@ public class SeasonalFlowerBlock : BlockPlant
                 capi.Logger.Error("[SeasonalFlowers] Failed to load texture: seasonalflowers:block/transparent");
             }
 
-            if (capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/hibernation"), out int hibernationId, out _))
-            {
-                _hibernationSubId = hibernationId;
-            }
-            else
+            if (!capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/hibernation"), out _, out _hibernationTexPos))
             {
                 capi.Logger.Error("[SeasonalFlowers] Failed to load texture: seasonalflowers:block/hibernation");
             }
@@ -74,7 +70,10 @@ public class SeasonalFlowerBlock : BlockPlant
 
         if (phase == "hibernate")
         {
-            ApplyFullOverride(ref mesh);
+            if (_hibernationTexPos != null)
+            {
+                ApplyFullOverride(ref mesh, _hibernationTexPos);
+            }
         }
         else if (phase == "grow" || phase == "wither")
         {
@@ -165,11 +164,6 @@ public class SeasonalFlowerBlock : BlockPlant
         return month;
     }
 
-    private bool IsPetalSubId(int subId)
-    {
-        return _petalSubIds.Contains(subId);
-    }
-
     // Modifies the flower's mesh to hide the petals. It does this by replacing the petal
     // textures with a transparent texture.
     private void HidePetals(ref MeshData mesh)
@@ -178,9 +172,7 @@ public class SeasonalFlowerBlock : BlockPlant
 
         for (int i = 0; i < mesh.TextureIds.Length; i++)
         {
-            int subId = mesh.TextureIds[i];
-
-            if (IsPetalSubId(subId))
+            if (_petalSubIds.Contains(mesh.TextureIds[i]))
             {
                 mesh.TextureIds[i] = _transparentSubId;
             }
@@ -189,13 +181,17 @@ public class SeasonalFlowerBlock : BlockPlant
 
     // Modifies the flower's mesh to replace all its textures with a single, specified texture.
     // This is used for the "hibernate" phase.
-    private void ApplyFullOverride(ref MeshData mesh)
+    private void ApplyFullOverride(ref MeshData mesh, TextureAtlasPosition texPos)
     {
-        if (_hibernationSubId == 0) return;
-
-        for (int i = 0; i < mesh.TextureIds.Length; i++)
+        for (int i = 0; i < mesh.GetVerticesCount(); i++)
         {
-            mesh.TextureIds[i] = _hibernationSubId;
+            var uv = new Vec2f(mesh.Uv[i * 2], mesh.Uv[i * 2 + 1]);
+            var newUv = new Vec2f(
+                texPos.x1 + uv.X * (texPos.x2 - texPos.x1),
+                texPos.y1 + uv.Y * (texPos.y2 - texPos.y1)
+            );
+            mesh.Uv[i * 2] = newUv.X;
+            mesh.Uv[i * 2 + 1] = newUv.Y;
         }
     }
 }
