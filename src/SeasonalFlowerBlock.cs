@@ -15,7 +15,7 @@ public class SeasonalFlowerBlock : BlockPlant
     private FlowerPhenology _phen = null!;
 
     // Pre-loaded texture atlas positions for seasonal textures
-    private TextureAtlasPosition? _hibernationTexPos;
+    private int _hibernationSubId;
     private int _transparentSubId;
     private HashSet<int> _petalSubIds = new();
 
@@ -38,7 +38,11 @@ public class SeasonalFlowerBlock : BlockPlant
                 capi.Logger.Error("[SeasonalFlowers] Failed to load texture: seasonalflowers:block/transparent");
             }
 
-            if (!capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/hibernation"), out _, out _hibernationTexPos))
+            if (capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/hibernation"), out int hibernationId, out _))
+            {
+                _hibernationSubId = hibernationId;
+            }
+            else
             {
                 capi.Logger.Error("[SeasonalFlowers] Failed to load texture: seasonalflowers:block/hibernation");
             }
@@ -70,10 +74,7 @@ public class SeasonalFlowerBlock : BlockPlant
 
         if (phase == "hibernate")
         {
-            if (_hibernationTexPos != null)
-            {
-                ApplyFullOverride(ref mesh, _hibernationTexPos);
-            }
+            ApplyFullOverride(ref mesh);
         }
         else if (phase == "grow" || phase == "wither")
         {
@@ -188,11 +189,13 @@ public class SeasonalFlowerBlock : BlockPlant
 
     // Modifies the flower's mesh to replace all its textures with a single, specified texture.
     // This is used for the "hibernate" phase.
-    private void ApplyFullOverride(ref MeshData mesh, TextureAtlasPosition texPos)
+    private void ApplyFullOverride(ref MeshData mesh)
     {
+        if (_hibernationSubId == 0) return;
+
         for (int i = 0; i < mesh.TextureIds.Length; i++)
         {
-            mesh.TextureIds[i] = texPos.atlasTextureSubId;
+            mesh.TextureIds[i] = _hibernationSubId;
         }
     }
 }
