@@ -1,9 +1,19 @@
 [
   {
     "op": "replace",
-    "file": "game:blocktypes/plant/flower.json",
-    "side": "server",
     "path": "/class",
-    "value": "SeasonalFlowerBlock"
+    "value": "SeasonalFlowerBlock",
+    "side": "server",
+    "file": "game:blocktypes/plant/flower.json"
+  },
+  {
+    "op": "add",
+    "path": "/variantgroups/-",
+    "value": {
+      "code": "phase",
+      "states": ["growing", "flowering", "withering", "hibernating"]
+    },
+    "side": "server",
+    "file": "game:blocktypes/plant/flower.json"
   }
 ]
