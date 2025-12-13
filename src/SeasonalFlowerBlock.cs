@@ -15,8 +15,9 @@ public class SeasonalFlowerBlock : BlockPlant
     private FlowerPhenology _phen = null!;
 
     // Pre-loaded texture atlas positions for seasonal textures
-    private TextureAtlasPosition? _transparentTexPos;
     private TextureAtlasPosition? _hibernationTexPos;
+    private int _transparentSubId;
+    private HashSet<int> _petalSubIds = new();
 
     // Called when the block is loaded by the game. This method initializes the phenology
     // for the flower by retrieving it from the central registry.
@@ -28,13 +29,28 @@ public class SeasonalFlowerBlock : BlockPlant
         // Pre-load textures on the main thread
         if (coreApi is ICoreClientAPI capi)
         {
-            if (!capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/transparent"), out _, out _transparentTexPos))
+            if (capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/transparent"), out int transparentId, out _))
+            {
+                _transparentSubId = transparentId;
+            }
+            else
             {
                 capi.Logger.Error("[SeasonalFlowers] Failed to load texture: seasonalflowers:block/transparent");
             }
+
             if (!capi.BlockTextureAtlas.GetOrInsertTexture(new AssetLocation("seasonalflowers:block/hibernation"), out _, out _hibernationTexPos))
             {
                 capi.Logger.Error("[SeasonalFlowers] Failed to load texture: seasonalflowers:block/hibernation");
+            }
+
+            foreach (var tex in Textures.Values)
+            {
+                if (tex?.Baked == null) continue;
+
+                if (tex.Base.Path.Contains("/petal/"))
+                {
+                    _petalSubIds.Add(tex.Baked.TextureSubId);
+                }
             }
         }
     }
@@ -61,10 +77,7 @@ public class SeasonalFlowerBlock : BlockPlant
         }
         else if (phase == "grow" || phase == "wither")
         {
-            if (_transparentTexPos != null)
-            {
-                HidePetals(ref mesh, _transparentTexPos);
-            }
+            HidePetals(ref mesh);
         }
         // if (phase == "flower") {} ==> Vanilla Textures (no modifications needed)
 
@@ -151,57 +164,24 @@ public class SeasonalFlowerBlock : BlockPlant
         return month;
     }
 
+    private bool IsPetalSubId(int subId)
+    {
+        return _petalSubIds.Contains(subId);
+    }
+
     // Modifies the flower's mesh to hide the petals. It does this by replacing the petal
     // textures with a transparent texture.
-    private void HidePetals(ref MeshData mesh, TextureAtlasPosition texPos)
+    private void HidePetals(ref MeshData mesh)
     {
-        var capi = api as ICoreClientAPI;
-        if (capi == null) return;
+        if (_transparentSubId == 0) return;
 
-        for (int i = 0; i < mesh.GetVerticesCount(); i++)
+        for (int i = 0; i < mesh.TextureIds.Length; i++)
         {
-            // Get the texture ID used by the current face of the mesh
-            // mesh.TextureIndices[i / 4] gives the index into mesh.TextureIds
-            // mesh.TextureIds[index] gives the actual texture sub ID
-            int currentMeshTextureSubId = mesh.TextureIds[mesh.TextureIndices[i / 4]];
+            int subId = mesh.TextureIds[i];
 
-            // Find the CompositeTexture in the Block's Textures dictionary that matches this sub ID
-            CompositeTexture? matchedCompositeTexture = null;
-            string matchedKey = "N/A"; // For logging
-            foreach (var kv in Textures)
+            if (IsPetalSubId(subId))
             {
-                if (kv.Value.Baked.TextureSubId == currentMeshTextureSubId)
-                {
-                    matchedCompositeTexture = kv.Value;
-                    matchedKey = kv.Key;
-                    break; // Found the matching texture definition
-                }
-            }
-
-            if (matchedCompositeTexture != null)
-            {
-                capi.Logger.Debug($"[SeasonalFlowers] HidePetals: BlockCode={Code.Path}, Matched Texture Key={matchedKey}, Matched Path={matchedCompositeTexture.Base.Path}, Mesh TextureSubId={currentMeshTextureSubId}");
-
-                // Now check if the path of this matched texture contains "petal"
-                if (matchedCompositeTexture.Base.Path.Contains("petal"))
-                {
-                    capi.Logger.Debug($"[SeasonalFlowers] HidePetals: Path contains 'petal' for BlockCode={Code.Path}, Key={matchedKey}. Applying transparency.");
-                    var uv = new Vec2f(mesh.Uv[i * 2], mesh.Uv[i * 2 + 1]);
-                    var newUv = new Vec2f(
-                        texPos.x1 + uv.X * (texPos.x2 - texPos.x1),
-                        texPos.y1 + uv.Y * (texPos.y2 - texPos.y1)
-                    );
-                    mesh.Uv[i * 2] = newUv.X;
-                    mesh.Uv[i * 2 + 1] = newUv.Y;
-                }
-                else
-                {
-                    capi.Logger.Debug($"[SeasonalFlowers] HidePetals: Path does NOT contain 'petal' for BlockCode={Code.Path}, Key={matchedKey}. Path: {matchedCompositeTexture.Base.Path}");
-                }
-            }
-            else
-            {
-                capi.Logger.Debug($"[SeasonalFlowers] HidePetals: BlockCode={Code.Path}, No matching CompositeTexture found in Block.Textures for mesh TextureSubId={currentMeshTextureSubId}");
+                mesh.TextureIds[i] = _transparentSubId;
             }
         }
     }
@@ -210,15 +190,9 @@ public class SeasonalFlowerBlock : BlockPlant
     // This is used for the "hibernate" phase.
     private void ApplyFullOverride(ref MeshData mesh, TextureAtlasPosition texPos)
     {
-        for (int i = 0; i < mesh.GetVerticesCount(); i++)
+        for (int i = 0; i < mesh.TextureIds.Length; i++)
         {
-            var uv = new Vec2f(mesh.Uv[i * 2], mesh.Uv[i * 2 + 1]);
-            var newUv = new Vec2f(
-                texPos.x1 + uv.X * (texPos.x2 - texPos.x1),
-                texPos.y1 + uv.Y * (texPos.y2 - texPos.y1)
-            );
-            mesh.Uv[i * 2] = newUv.X;
-            mesh.Uv[i * 2 + 1] = newUv.Y;
+            mesh.TextureIds[i] = texPos.atlasTextureSubId;
         }
     }
 }
