@@ -2,6 +2,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using System;
 using System.Collections.Generic;
+using Vintagestory.GameContent;
 
 namespace SeasonalFlowers;
 
@@ -15,10 +16,11 @@ public class SeasonalFlowerBlock : BlockPlant
         _phen = FlowerPhenologyRegistry.Get(Code.Path);
     }
 
-    public override bool ShouldReceiveServerGameTicks(IWorldAccessor world, BlockPos pos, Random offThreadRandom, out object extra)
+    public override bool ShouldReceiveServerGameTicks(IWorldAccessor world, BlockPos pos, Random offThreadRandom, out object? extra)
     {
         extra = null;
-        if (_phen == null) return false;
+        // _phen is guaranteed to be non-null after OnLoaded, so this check is redundant.
+        // if (_phen == null) return false; 
 
         // Reduce the frequency of checks
         if (offThreadRandom.NextDouble() > 0.05) return false;
@@ -39,7 +41,7 @@ public class SeasonalFlowerBlock : BlockPlant
         return false;
     }
 
-    public override void OnServerGameTick(IWorldAccessor world, BlockPos pos, object extra = null)
+    public override void OnServerGameTick(IWorldAccessor world, BlockPos pos, object? extra = null)
     {
         if (extra is Block nextBlock)
         {
