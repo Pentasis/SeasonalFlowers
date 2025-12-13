@@ -35,7 +35,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="assets\" />
+        <Folder Include="assets\seasonalflowers\patches\blocktypes\plant\" />
         <Folder Include="src\logs\" />
     </ItemGroup>
 

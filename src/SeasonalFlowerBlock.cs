@@ -2,12 +2,10 @@ using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using System;
 using System.Collections.Generic;
-using Vintagestory.GameContent; // BlockPlant is in this namespace
+using Vintagestory.GameContent;
 
 namespace SeasonalFlowers;
 
-// Represents a flower block that changes its appearance based on the current season.
-// This class now handles server-side block swapping to reflect seasonal changes.
 public class SeasonalFlowerBlock : BlockPlant
 {
     // Stores the seasonal growth cycle information for this specific flower block.

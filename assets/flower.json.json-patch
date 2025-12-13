@@ -1,0 +1,115 @@
+[
+  {
+    "op": "replace",
+    "path": "/class",
+    "value": "SeasonalFlowerBlock",
+    "side": "server",
+    "file": "game:blocktypes/plant/flower.json"
+  },
+  {
+    "op": "add",
+    "path": "/variantgroups/-",
+    "value": {
+      "code": "phase",
+      "states": ["growing", "flowering", "withering", "hibernating"]
+    },
+    "side": "server",
+    "file": "game:blocktypes/plant/flower.json"
+  },
+  {
+    "op": "replace",
+    "path": "/attributes/sitHeightByType",
+    "value": {
+      "*-catmint-*-*": 0.8125,
+      "*-cornflower-*-*": 0.6,
+      "*-forgetmenot-*-*": 0.2,
+      "*-lilyofthevalley-*-*": 0.2,
+      "*-edelweiss-*-*": 0.46,
+      "*-heather-*-*": 0.4375,
+      "*-horsetail-*-*": 0.75,
+      "*-orangemallow-*-*": 0.6875,
+      "*-wilddaisy-*-*": 0.85,
+      "*-westerngorse-*-*": 0.45,
+      "*-cowparsley-*-*": 0.9375,
+      "*-goldenpoppy-*-*": 0.41,
+      "*-woad-*-*": 0.8125,
+      "*-redtopgrass-*-*": 0.75
+    },
+    "file": "game:blocktypes/plant/flower.json",
+    "side": "server"
+  },
+  {
+    "op": "replace",
+    "path": "/attributes/overrideRandomDrawOffsetByType",
+    "value": {
+      "*-heather-*-*": 3
+    },
+    "file": "game:blocktypes/plant/flower.json",
+    "side": "server"
+  },
+  {
+    "op": "replace",
+    "path": "/attributes/plantContainable",
+    "value": {
+      smallContainerByType: {
+        "*-lilyofthevalley-*-*": {
+          shape: { base: "block/clay/flowerpot/contents-lilyofthevalley" }
+        },
+        "*": {
+          shape: { base: "block/clay/flowerpot/contents" },
+          textures: {
+            "north": { base: "block/plant/potted/{flower}" },
+            "south": { base: "block/plant/potted/{flower}" }
+          }
+        }
+      },
+      largeContainerByType: {
+        "*-lilyofthevalley-*-*": {
+          shape: { base: "block/clay/planter/contents-lilyofthevalley" }
+        },
+        "*": {
+          shape: { base:  "block/clay/planter/contents" },
+          textures: {
+            "north": { base: "block/plant/potted/{flower}" },
+            "south": { base: "block/plant/potted/{flower}" }
+          }
+        }
+      }
+    },
+    "file": "game:blocktypes/plant/flower.json",
+    "side": "server"
+  },
+  {
+    "op": "replace",
+    "path": "/attributes/drawnHeightByType",
+    "value": {
+      "*-goldenpoppy-*-*": 32,
+      "*-edelweiss-*-*": 36,
+      "*-forgetmenot-*-*": 16,
+      "*-horsetail-*-*": 40,
+      "*-heather-*-*": 28,
+      "*-redtopgrass-*-*": 38,
+      "*": 48
+    },
+    "file": "game:blocktypes/plant/flower.json",
+    "side": "server"
+  },
+  {
+    "op": "replace",
+    "path": "/creativeinventory",
+    "value": { "general": ["*-free-flowering"], "flora": ["*-free-flowering"] },
+    "file": "game:blocktypes/plant/flower.json",
+    "side": "server"
+  },
+  {
+    "op": "replace",
+    "path": "/drawtypeByType",
+    "value": {
+      "*-snow-*": "JSONAndSnowLayer",
+      "*": "JSON"
+    },
+    "file": "game:blocktypes/plant/flower.json",
+    "side": "server"
+  }
+]
+  
