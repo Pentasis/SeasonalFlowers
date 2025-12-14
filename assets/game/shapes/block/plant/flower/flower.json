@@ -9,6 +9,7 @@
       }
 	],
 	attributes: {
+        randomTickDensity: 0.5,
 		butterflyFeed: true,
 		beeFeed: true,
 		reinforcable: true,
@@ -77,19 +78,26 @@
 		"*-horsetail-*-*": { base: "item/resource/horsetail" }
 	},
 	shapeByType: {
-		"*-catmint-*-*":  { base: "block/plant/flower/1patch-3faces-24x24" },
-		"*-wilddaisy-*-*":  { base: "block/plant/flower/1patch-3faces-24x24" },
-		"*-goldenpoppy-*-*":  { base: "block/plant/flower/3patches-3faces-24x24" },
-		"*-horsetail-*-*":  { base: "block/plant/flower/3patches-3faces-24x24" },
-		"*-edelweiss-*-*":  { base: "block/plant/flower/3patches-3faces-16x16" },
-		"*-forgetmenot-*-*":  { base: "block/plant/flower/3patches-3faces-16x16" },
-		"*-woad-*-*": { base: "block/plant/flower/3patches-3faces-24x24" },
-		"*-cowparsley-*-*": { base: "block/plant/flower/3patches-3faces-24x24" },
-		"*-lilyofthevalley-*-*": { base: "block/plant/flower/lilyofthevalley" },
-		"*-cornflower-*-*":  { base: "block/plant/flower/1patch-3faces-24x24" },
-		"*-orangemallow-*-*":  { base: "block/plant/flower/1patch-dense-24x24" },
-		"*-westerngorse-*-*":  { base: "block/plant/flower/1patch-dense-24x24" },
-		"*-heather-*-*":  { base: "block/plant/flower/1patch-dense-24x24" },
+		"*-catmint-*-flowering":  { base: "block/plant/flower/1patch-3faces-24x24" },
+		"*-wilddaisy-*-flowering":  { base: "block/plant/flower/1patch-3faces-24x24" },
+		"*-goldenpoppy-*-flowering":  { base: "block/plant/flower/3patches-3faces-24x24" },
+		"*-horsetail-*-flowering":  { base: "block/plant/flower/3patches-3faces-24x24" },
+		"*-edelweiss-*-flowering":  { base: "block/plant/flower/3patches-3faces-16x16" },
+		"*-forgetmenot-*-flowering":  { base: "block/plant/flower/3patches-3faces-16x16" },
+		"*-woad-*-flowering": { base: "block/plant/flower/3patches-3faces-24x24" },
+		"*-cowparsley-*-flowering": { base: "block/plant/flower/3patches-3faces-24x24" },
+		"*-lilyofthevalley-*-flowering": { base: "block/plant/flower/lilyofthevalley" },
+		"*-cornflower-*-flowering":  { base: "block/plant/flower/1patch-3faces-24x24" },
+		"*-orangemallow-*-flowering":  { base: "block/plant/flower/1patch-dense-24x24" },
+		"*-westerngorse-*-flowering":  { base: "block/plant/flower/1patch-dense-24x24" },
+		"*-heather-*-flowering":  { base: "block/plant/flower/1patch-dense-24x24" },
+
+        "*-*-*-growing":  { base: "seasonalflowers:block/plant/flower/{flower}-stem" },
+      
+        "*-*-*-withering":  { base: "seasonalflowers:block/plant/flower/{flower}-stem" },
+      
+        "*-*-*-hibernating": { base: "seasonalflowers:block/plant/flower/hibernating" },
+      
 		"*": { base: "block/plant/flower/1patch-cross-24x24" }
 	},
 	lod2shapeByType: {

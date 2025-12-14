@@ -15,7 +15,7 @@ public class SeasonalFlowerBlock : BlockPlant
     // This method initializes the phenology for the flower by retrieving it from the central registry.
     public override void OnLoaded(ICoreAPI coreApi)
     {
-        base.OnLoaded(coreApi);
+        base.OnLoaded(coreApi); // This call populates the base Block.RandomTickDensity from JSON attributes.
         // Retrieve the flower's phenology data based on its block code.
         _phen = FlowerPhenologyRegistry.Get(Code.Path);
     }
@@ -26,14 +26,18 @@ public class SeasonalFlowerBlock : BlockPlant
     {
         extra = null; // Initialize extra to null, indicating no block change by default.
 
-        // Reduce the frequency of checks to improve performance.
-        // Only a small percentage of blocks will be checked on each tick.
-        if (offThreadRandom.NextDouble() > 0.05) return false;
+        // Use the base Block.RandomTickDensity property, which is populated from JSON attributes.
+        // This value controls the frequency of the internal check.
+        //if (offThreadRandom.NextDouble() > this.RandomTickDensity) return false;
+
+        world.Logger.Debug($"[SeasonalFlowers] ShouldReceiveServerGameTicks: Checking block at {pos}");
 
         // Get the current phase from the block's variant attributes (e.g., "flower-daisy-flowering" -> "flowering").
         string currentPhase = Variant["phase"];
         // Determine the correct phase based on the current in-game calendar and the flower's phenology.
         string correctPhase = GetPhase(world.Calendar, pos);
+
+        world.Logger.Debug($"[SeasonalFlowers] ShouldReceiveServerGameTicks: Block {Code.Path} at {pos}. Current phase: {currentPhase}, Correct phase: {correctPhase}");
 
         // If the current phase does not match the correct phase for the season,
         // prepare to swap the block.
@@ -41,12 +45,25 @@ public class SeasonalFlowerBlock : BlockPlant
         {
             // Get the block instance for the new phase variant.
             // CodeWithVariant constructs a new AssetLocation for the target block (e.g., "flower-daisy-hibernating").
-            Block nextBlock = world.GetBlock(CodeWithVariant("phase", correctPhase));
+            AssetLocation nextBlockCode = CodeWithVariant("phase", correctPhase);
+            Block nextBlock = world.GetBlock(nextBlockCode);
+            
+            world.Logger.Debug($"[SeasonalFlowers] ShouldReceiveServerGameTicks: Phase mismatch for {Code.Path} at {pos}. Attempting to swap to {nextBlockCode.Path}");
+
             if (nextBlock != null)
             {
                 extra = nextBlock; // Pass the new block as extra data to OnServerGameTick.
+                world.Logger.Debug($"[SeasonalFlowers] ShouldReceiveServerGameTicks: Found next block {nextBlock.Code.Path}. Returning true.");
                 return true; // Indicate that OnServerGameTick should be called on the main thread.
             }
+            else
+            {
+                world.Logger.Warning($"[SeasonalFlowers] ShouldReceiveServerGameTicks: Failed to find next block for {Code.Path} with variant phase={correctPhase}. AssetLocation: {nextBlockCode.Path}");
+            }
+        }
+        else
+        {
+            world.Logger.Debug($"[SeasonalFlowers] ShouldReceiveServerGameTicks: Phase matches for {Code.Path} at {pos}. No change needed.");
         }
 
         return false; // No change needed or next block not found.
@@ -59,9 +76,14 @@ public class SeasonalFlowerBlock : BlockPlant
         // If extra contains a Block, it means a phase change is required.
         if (extra is Block nextBlock)
         {
+            world.Logger.Debug($"[SeasonalFlowers] OnServerGameTick: Swapping block at {pos} from {Code.Path} to {nextBlock.Code.Path}");
             // Exchange the current block with the new phase variant.
             // This updates the block in the world and triggers client-side re-rendering.
             world.BlockAccessor.ExchangeBlock(nextBlock.Id, pos);
+        }
+        else
+        {
+            world.Logger.Warning($"[SeasonalFlowers] OnServerGameTick: Extra object was not a Block for block at {pos}. No swap performed.");
         }
     }
 
@@ -84,7 +106,6 @@ public class SeasonalFlowerBlock : BlockPlant
             h = ShiftMonth(h);
         }
 
-        // Calculate total hours passed in the year.
         double hours = cal.TotalDays * cal.HoursPerDay + cal.HourOfDay;
 
         // Calculate threshold hours for each phase transition.
