@@ -9,7 +9,6 @@
       }
 	],
 	attributes: {
-        randomTickDensity: 0.5,
 		butterflyFeed: true,
 		beeFeed: true,
 		reinforcable: true,
