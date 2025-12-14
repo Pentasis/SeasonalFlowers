@@ -1,12 +1,14 @@
 ﻿using Vintagestory.API.Common;
 using Vintagestory.API.Server;
+using Vintagestory.API.MathTools;
+using Vintagestory.API.Config;
 
 namespace SeasonalFlowers;
 
 public class SeasonalFlowersModSystem : ModSystem
 {
-    private ICoreServerAPI sapi;
-    private int lastCheckedMonth = -1;
+    private ICoreServerAPI _sapi = null!;
+    private int _lastCheckedMonth = -1;
 
     public override void Start(ICoreAPI api)
     {
@@ -16,58 +18,68 @@ public class SeasonalFlowersModSystem : ModSystem
     
     public override void StartServerSide(ICoreServerAPI api)
     {
-        sapi = api;
+        _sapi = api;
 
-        // Check once every in-game hour (1000 ms real-time is fine too)
-        sapi.Event.RegisterGameTickListener(OnServerTick, 1000);
+        // Check once every in-game hour (3000 ms real-time is fine too)
+        _sapi.Event.RegisterGameTickListener(OnServerTick, 3000);
     }
 
     private void OnServerTick(float dt)
     {
-        var cal = sapi.World.Calendar;
+        var cal = _sapi.World.Calendar;
 
         int currentMonth = cal.Month;
 
         // Only act when month changes
-        if (currentMonth == lastCheckedMonth) return;
-        lastCheckedMonth = currentMonth;
+        if (currentMonth == _lastCheckedMonth) return;
+        _lastCheckedMonth = currentMonth;
 
         UpdateSeasonalFlowers();
     }
     
     private void UpdateSeasonalFlowers()
     {
-        var world = sapi.World;
+        var world = _sapi.World;
         var blockAccessor = world.BlockAccessor;
 
-        foreach (var player in sapi.World.AllOnlinePlayers)
+        // We only need to run this scan once for the entire server, not per player.
+        // We'll scan all loaded chunks.
+
+        foreach (var kvp in _sapi.WorldManager.AllLoadedChunks)
         {
-            var chunkPos = player.Entity.ServerPos.AsBlockPos;
+            long chunkIndex3d = kvp.Key;
+            int chunkSize = GlobalConstants.ChunkSize;
+            
+            // Convert 3D index to chunk coordinates
+            Vec3i chunkPos = new Vec3i();
+            MapUtil.PosInt3d(chunkIndex3d, _sapi.WorldManager.MapSizeX / chunkSize, _sapi.WorldManager.MapSizeZ / chunkSize, chunkPos);
 
-            // Radius: only loaded chunks around players
-            int radius = 8;
-
-            blockAccessor.WalkBlocks(
-                chunkPos.AddCopy(-radius * 16, -8, -radius * 16),
-                chunkPos.AddCopy(radius * 16, 8, radius * 16),
-                (pos, block) =>
-                {
-                    if (block is SeasonalFlowerBlock flower)
-                    {
-                        string correctPhase = flower.GetCorrectPhase(world.Calendar, pos);
-                        string currentPhase = block.Variant["phase"];
-
-                        if (currentPhase != correctPhase)
-                        {
-                            Block next = world.GetBlock(block.CodeWithVariant("phase", correctPhase));
-                            if (next != null)
-                            {
-                                blockAccessor.ExchangeBlock(next.Id, pos);
-                            }
-                        }
-                    }
-                }
+            BlockPos minPos = new BlockPos(
+                chunkPos.X * chunkSize,
+                chunkPos.Y * chunkSize,
+                chunkPos.Z * chunkSize
             );
+
+            BlockPos maxPos = minPos.AddCopy(chunkSize - 1, chunkSize - 1, chunkSize - 1);
+
+            blockAccessor.WalkBlocks(minPos, maxPos, (block, x, y, z) =>
+            {
+                if (block is not SeasonalFlowerBlock flower) return;
+
+                BlockPos pos = new BlockPos(x, y, z);
+
+                string currentPhase = block.Variant["phase"];
+                string correctPhase = flower.GetCorrectPhase(_sapi.World.Calendar, pos);
+
+                if (currentPhase == correctPhase) return;
+
+                Block next = _sapi.World.GetBlock(block.CodeWithVariant("phase", correctPhase));
+                if (next != null)
+                {
+                    blockAccessor.ExchangeBlock(next.Id, pos);
+                }
+            });
         }
+
     }
 }

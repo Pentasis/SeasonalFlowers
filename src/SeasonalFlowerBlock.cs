@@ -1,6 +1,5 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
-using System;
 using System.Collections.Generic;
 using Vintagestory.GameContent;
 
@@ -22,7 +21,7 @@ public class SeasonalFlowerBlock : BlockPlant
 
     // Determines the current seasonal phase of the flower (e.g., "grow", "flower", "wither", "hibernate")
     // based on the current date in the in-game calendar.
-    private string GetCorrectPhase(IGameCalendar cal, BlockPos pos)
+    public string GetCorrectPhase(IGameCalendar cal, BlockPos pos)
     {
         // Retrieve phenology data for the current flower.
         int g = _phen.GrowMonth;
