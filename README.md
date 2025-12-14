@@ -5,12 +5,6 @@ Flowers now grow, bloom, wither and hibernate. I tried to follow each type of fl
 
 Changes only occur at night so as not to break immersion when they transition suddenly.
 
-## Performance
-Performance impact should be minimal if at all. There is an extra game tick on the server that runs only once every minute and re-rendering the flowers is done using the game's own re-tesselation loop.
-
-## Important Note for Mod Developers
-This mod makes fundamental changes to vanilla flower block definitions.
-It adds a new phase variant to all vanilla flower blocks (e.g., flower-wilddaisy-free-flowering). This alters the expected variant structure of `game:blocktypes/plant/flower.json`.
-If your mod patches this file you need to provide a compatibility patch for this mod as well.
-(this also applies to flower-lupine.json but NOT rafflesia.json)
+## ABANDONED for now
+I am unable to get this to work at present.
 
